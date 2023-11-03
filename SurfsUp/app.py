@@ -14,7 +14,7 @@ from flask import Flask, jsonify
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///../Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -42,9 +42,9 @@ def welcome():
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs"
-        f"/api/v1.0/<start>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/<start><br/>"
+        f"/api/v1.0/<start>/<end><br/>"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -83,13 +83,16 @@ def stations():
     # Close session
     session.close()
 
-    return jsonify(results)
-
+    # Unravel results into a 1D array and convert to a list
+    stations = list(np.ravel(results))
+    return jsonify(stations=stations)
 
 @app.route("/api/v1.0/tobs")
 def tobs():
     # Create our session (link) from Python to the DB
     session = Session(engine)
+
+    query_date = dt.date(2017, 8, 23) - dt.timedelta(days = 365)
 
     active_station_tobs = session.query(Measurement.tobs).\
     filter(Measurement.date > query_date).\
@@ -98,7 +101,9 @@ def tobs():
     # Close session
     session.close()
 
-    return jsonify(active_station_tobs)
+    # Unravel results into a 1D array and convert to a list
+    tobs = list(np.ravel(active_station_tobs))
+    return jsonify(tobs=tobs)
 
 
 @app.route("/api/v1.0/<start>")
@@ -108,18 +113,29 @@ def temperature_by_start_date(start_date):
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    proper_date = date.replace("-", "")
-    for date in dates:
-        search_date = date["start_date"].replace("-", "")
+    # proper_date = date.replace("-", "")
     
-        if search_date == proper_date:
-            temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-            filter(Measurement.date >= start_date).all()
+    # dates = session.query(Measurement.date).all()
+
+    # for date in dates:
+    #     search_date = date["start_date"].replace("-", "")
+    
+    #     if search_date == proper_date:
+    #         temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+    #         filter(Measurement.date >= start_date).all()
+    sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
+
+    start = dt.datetime.strptime(start, "%m%d%Y")
+    results = session.query(*sel).\
+        filter(Measurement.date >= start).all()
 
     # Close session
     session.close()
-        
+
+    temps = list(np.ravel(results))
+    
     return jsonify(temps)
+    
     
  
 @app.route("/api/v1.0/<start>/<end>")
@@ -129,6 +145,8 @@ def temperature_start_end_date(date_range):
     
     # Create our session (link) from Python to the DB
     session = Session(engine)
+
+    dates = session.query(Measurement.date).all()
 
     start_date = "2010-01-01"
     end_date = "2010-01-31"
