@@ -19,7 +19,7 @@ engine = create_engine("sqlite:///../Resources/hawaii.sqlite")
 # reflect an existing database into a new model
 Base = automap_base()
 # reflect the tables
-Base.prepare(autoload_with = engine)
+Base.prepare(autoload_with=engine)
 
 # Save references to each table
 Measurement = Base.classes.measurement
@@ -30,7 +30,6 @@ Station = Base.classes.station
 # Flask Setup
 #################################################
 app = Flask(__name__)
-
 
 
 #################################################
@@ -120,11 +119,9 @@ def temperature_by_start_date(start_date):
     # Close session
     session.close()
         
-            return jsonify(temps)
+    return jsonify(temps)
     
-    return jsonify({"error": f"data for that date not found. Please use yyyymmdd format"}), 404
-
-
+ 
 @app.route("/api/v1.0/<start>/<end>")
 
 def temperature_start_end_date(date_range):
@@ -147,10 +144,9 @@ def temperature_start_end_date(date_range):
     # Close session
     session.close()
         
-            return jsonify(temps)
+    return jsonify(temps)
     
     return jsonify({"error": f"data for that date not found. Please use yyyymmdd format"}), 404
-
 
 
 if __name__ == '__main__':
