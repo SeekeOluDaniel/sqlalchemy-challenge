@@ -107,22 +107,12 @@ def tobs():
 
 
 @app.route("/api/v1.0/<start>")
-def temperature_by_start_date(start_date):
+def temperature_by_start_date(start):
     """Fetch the TMIN, TAVG and TMAX for all the dates greater than or equal to the start date."""
     
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    # proper_date = date.replace("-", "")
-    
-    # dates = session.query(Measurement.date).all()
-
-    # for date in dates:
-    #     search_date = date["start_date"].replace("-", "")
-    
-    #     if search_date == proper_date:
-    #         temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-    #         filter(Measurement.date >= start_date).all()
     sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
 
     start = dt.datetime.strptime(start, "%m%d%Y")
@@ -137,35 +127,29 @@ def temperature_by_start_date(start_date):
     return jsonify(temps)
     
     
- 
 @app.route("/api/v1.0/<start>/<end>")
 
-def temperature_start_end_date(date_range):
+def temperature_date_range():
     """Fetch the TMIN, TAVG and TMAX for the dates from the start date to the end date, inclusive."""
     
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    dates = session.query(Measurement.date).all()
-
-    start_date = "2010-01-01"
-    end_date = "2010-01-31"
-
-    proper_date = date.replace("-", "")
-    for date in dates:
-        search_date = date["start_date"].replace("-", "")
+    sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
     
-        if search_date == proper_date:
-            temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-            filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
-
+    start = dt.datetime.strptime(start, "%m%d%Y")
+    end = dt.datetime.strptime(end, "%m%d%Y")
+    
+    results = session.query(*sel).\
+            filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    
     # Close session
     session.close()
-        
+
+    temps = list(np.ravel(results))
+
     return jsonify(temps)
     
-    return jsonify({"error": f"data for that date not found. Please use yyyymmdd format"}), 404
-
-
+    
 if __name__ == '__main__':
     app.run(debug=True)
