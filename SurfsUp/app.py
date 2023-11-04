@@ -129,7 +129,7 @@ def temperature_by_start_date(start):
     
 @app.route("/api/v1.0/<start>/<end>")
 
-def temperature_date_range():
+def temperature_date_range(start, end):
     """Fetch the TMIN, TAVG and TMAX for the dates from the start date to the end date, inclusive."""
     
     # Create our session (link) from Python to the DB
